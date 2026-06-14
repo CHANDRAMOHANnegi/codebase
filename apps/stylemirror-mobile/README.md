@@ -227,6 +227,7 @@ default                            → oval
 | `c43fac9` | Update mobile git history |
 | `1659635` | Surface style preference in try-on |
 | `1dbb65a` | Cover style recommendation rules |
+| `63475c0` | Align Expo SDK dependency versions |
 
 ---
 
