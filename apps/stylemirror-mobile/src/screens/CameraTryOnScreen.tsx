@@ -14,6 +14,7 @@ import { FaceScanResult } from '@stylemirror/shared';
 import { HairstyleRecommendation } from '@stylemirror/style-engine';
 import { HairstyleOverlay } from '../components/HairstyleOverlay';
 import { ScanRingOverlay } from '../components/ScanRingOverlay';
+import { scanQualityTips } from '../features/scan/scanQuality';
 import { FaceDetection, NormalizedFaceBounds, ScanStatus } from '../features/scan/useFaceScan';
 import { theme } from '../theme/theme';
 
@@ -214,6 +215,21 @@ export function CameraTryOnScreen({
       {errorMsg && (
         <View style={styles.errorBanner}>
           <Text style={styles.errorText}>{errorMsg}</Text>
+        </View>
+      )}
+
+      {(errorMsg || !lastPhotoUri) && (
+        <View style={styles.qualityPanel}>
+          <Text style={styles.qualityTitle}>Better scan tips</Text>
+          {scanQualityTips.map((tip) => (
+            <View key={tip.id} style={styles.qualityRow}>
+              <View style={styles.qualityDot} />
+              <View style={styles.qualityTextWrap}>
+                <Text style={styles.qualityItemTitle}>{tip.title}</Text>
+                <Text style={styles.qualityItemBody}>{tip.body}</Text>
+              </View>
+            </View>
+          ))}
         </View>
       )}
 
@@ -434,6 +450,48 @@ const styles = StyleSheet.create({
     color: theme.colors.warning,
     fontSize: 13,
     lineHeight: 19
+  },
+  qualityPanel: {
+    backgroundColor: theme.colors.surface,
+    borderColor: theme.colors.border,
+    borderRadius: theme.radius.md,
+    borderWidth: 1,
+    marginHorizontal: theme.spacing.md,
+    marginTop: theme.spacing.sm,
+    padding: theme.spacing.md
+  },
+  qualityTitle: {
+    color: theme.colors.text,
+    fontSize: 14,
+    fontWeight: '900',
+    marginBottom: theme.spacing.sm
+  },
+  qualityRow: {
+    alignItems: 'flex-start',
+    flexDirection: 'row',
+    gap: theme.spacing.sm,
+    marginTop: 8
+  },
+  qualityDot: {
+    backgroundColor: theme.colors.accent,
+    borderRadius: 999,
+    height: 8,
+    marginTop: 6,
+    width: 8
+  },
+  qualityTextWrap: {
+    flex: 1
+  },
+  qualityItemTitle: {
+    color: theme.colors.text,
+    fontSize: 13,
+    fontWeight: '800'
+  },
+  qualityItemBody: {
+    color: theme.colors.textMuted,
+    fontSize: 12,
+    lineHeight: 17,
+    marginTop: 2
   },
   sheet: {
     padding: theme.spacing.md
