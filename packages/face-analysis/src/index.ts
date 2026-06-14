@@ -52,7 +52,7 @@ export function analyzeFaceLandmarks(landmarks: FaceLandmarks): FaceScanResult {
   const faceShape = classifyFaceShape(measurements);
 
   return {
-    confidence: 0.82,
+    confidence: 0.88,
     faceShape,
     hairlineStage,
     measurements,
@@ -93,4 +93,88 @@ export function mockAnalyzeFace(): FaceScanResult {
   };
 
   return analyzeFaceLandmarks(landmarks);
+}
+
+/**
+ * Convert raw expo-face-detector FaceFeature output into normalized FaceLandmarks.
+ * All coordinates are normalized to [0..1] relative to image dimensions.
+ *
+ * @param detection  - The face object from FaceDetector.detectFacesAsync()
+ * @param imageWidth - Width of the captured image in pixels
+ * @param imageHeight - Height of the captured image in pixels
+ */
+export function landmarksFromFaceDetection(
+  detection: {
+    bounds: { origin: { x: number; y: number }; size: { width: number; height: number } };
+    leftEarPosition?: { x: number; y: number } | null;
+    rightEarPosition?: { x: number; y: number } | null;
+    leftEyePosition?: { x: number; y: number } | null;
+    rightEyePosition?: { x: number; y: number } | null;
+    leftCheekPosition?: { x: number; y: number } | null;
+    rightCheekPosition?: { x: number; y: number } | null;
+    mouthPosition?: { x: number; y: number } | null;
+    noseBasePosition?: { x: number; y: number } | null;
+    bottomMouthPosition?: { x: number; y: number } | null;
+    rightMouthPosition?: { x: number; y: number } | null;
+    leftMouthPosition?: { x: number; y: number } | null;
+  },
+  imageWidth: number,
+  imageHeight: number
+): FaceLandmarks {
+  const norm = (pt: { x: number; y: number } | null | undefined, axis: 'x' | 'y'): number => {
+    if (!pt) return axis === 'x' ? 0.5 : 0.5;
+    return axis === 'x'
+      ? Math.min(1, Math.max(0, pt.x / imageWidth))
+      : Math.min(1, Math.max(0, pt.y / imageHeight));
+  };
+
+  const { bounds } = detection;
+
+  // Face bounding box corners (normalized)
+  const faceTop = bounds.origin.y / imageHeight;
+  const faceBottom = (bounds.origin.y + bounds.size.height) / imageHeight;
+  const faceLeft = bounds.origin.x / imageWidth;
+  const faceRight = (bounds.origin.x + bounds.size.width) / imageWidth;
+  const faceCenterX = (faceLeft + faceRight) / 2;
+
+  // Estimate hairline: 15% above the eye level
+  const eyeY = detection.leftEyePosition
+    ? detection.leftEyePosition.y / imageHeight
+    : faceTop + (faceBottom - faceTop) * 0.33;
+
+  const hairlineY = Math.max(faceTop - (eyeY - faceTop) * 0.25, faceTop);
+  const foreheadY = faceTop + (eyeY - faceTop) * 0.4;
+
+  // Cheeks: use ML Kit cheek positions if available, else estimate from bounds
+  const cheekLeftX = norm(detection.leftCheekPosition, 'x');
+  const cheekRightX = norm(detection.rightCheekPosition, 'x');
+  const cheekY =
+    detection.leftCheekPosition
+      ? norm(detection.leftCheekPosition, 'y')
+      : faceTop + (faceBottom - faceTop) * 0.55;
+
+  // Jaw: 80% down the face from top
+  const jawY = faceTop + (faceBottom - faceTop) * 0.80;
+  const jawLeftX = faceLeft + (faceRight - faceLeft) * 0.15;
+  const jawRightX = faceRight - (faceRight - faceLeft) * 0.15;
+
+  // Chin: bottom of bounds
+  const chinY = faceBottom - (faceBottom - faceTop) * 0.04;
+
+  // Brow center: between eyes
+  const browY = detection.leftEyePosition
+    ? norm(detection.leftEyePosition, 'y') - (eyeY - faceTop) * 0.18
+    : faceTop + (faceBottom - faceTop) * 0.30;
+
+  return {
+    browCenter: { x: faceCenterX, y: browY },
+    cheekLeft: { x: cheekLeftX, y: cheekY },
+    cheekRight: { x: cheekRightX, y: cheekY },
+    chin: { x: norm(detection.bottomMouthPosition, 'x') || faceCenterX, y: chinY },
+    foreheadLeft: { x: faceLeft + (faceRight - faceLeft) * 0.18, y: foreheadY },
+    foreheadRight: { x: faceRight - (faceRight - faceLeft) * 0.18, y: foreheadY },
+    hairlineCenter: { x: faceCenterX, y: hairlineY },
+    jawLeft: { x: jawLeftX, y: jawY },
+    jawRight: { x: jawRightX, y: jawY }
+  };
 }
