@@ -224,6 +224,9 @@ default                            → oval
 | `c1ec1fd` | Document app and stabilize native scan dependencies |
 | `293fbb4` | Add style preference filtering |
 | `4f22ee9` | Add scan quality guidance |
+| `c43fac9` | Update mobile git history |
+| `1659635` | Surface style preference in try-on |
+| `1dbb65a` | Cover style recommendation rules |
 
 ---
 
