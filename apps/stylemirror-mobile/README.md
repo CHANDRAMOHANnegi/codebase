@@ -221,6 +221,9 @@ default                            → oval
 | `a0df5e3` | HairstyleOverlay positioned from detected face bounds |
 | `55a464e` | useSavedLooks with AsyncStorage + real SavedLooksScreen |
 | `df2ea21` | Polish — WelcomeScreen chips, error banner, camera permission card |
+| `c1ec1fd` | Document app and stabilize native scan dependencies |
+| `293fbb4` | Add style preference filtering |
+| `4f22ee9` | Add scan quality guidance |
 
 ---
 
