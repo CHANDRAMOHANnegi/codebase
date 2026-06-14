@@ -1,103 +1,248 @@
+import * as FaceDetector from 'expo-face-detector';
 import { CameraView, useCameraPermissions } from 'expo-camera';
-import { useMemo, useState } from 'react';
-import { FlatList, Pressable, StyleSheet, Text, View } from 'react-native';
+import { useCallback, useMemo, useRef, useState } from 'react';
+import {
+  ActivityIndicator,
+  FlatList,
+  LayoutChangeEvent,
+  Pressable,
+  StyleSheet,
+  Text,
+  View
+} from 'react-native';
 import { FaceScanResult } from '@stylemirror/shared';
 import { HairstyleRecommendation } from '@stylemirror/style-engine';
+import { HairstyleOverlay } from '../components/HairstyleOverlay';
+import { ScanRingOverlay } from '../components/ScanRingOverlay';
+import { FaceDetection, NormalizedFaceBounds, ScanStatus } from '../features/scan/useFaceScan';
 import { theme } from '../theme/theme';
 
 type Props = {
-  onRunScan: () => void;
+  onRunRealScan: (
+    photoUri: string,
+    detections: FaceDetection[],
+    width: number,
+    height: number
+  ) => void;
+  onRunDemoScan: () => void;
+  onSaveLook: (styleId: string, styleName: string, photoUri?: string) => void;
   scan: FaceScanResult;
-  scanStatus: 'ready' | 'scanning' | 'complete';
+  scanStatus: ScanStatus;
+  errorMsg: string | null;
+  faceBounds: NormalizedFaceBounds | null;
+  lastPhotoUri: string | null;
   recommendations: HairstyleRecommendation[];
 };
 
-export function CameraTryOnScreen({ onRunScan, scan, scanStatus, recommendations }: Props) {
+type Mode = 'Hair' | 'Beard' | 'Hairline' | 'Transplant preview';
+const MODES: Mode[] = ['Hair', 'Beard', 'Hairline', 'Transplant preview'];
+
+export function CameraTryOnScreen({
+  onRunRealScan,
+  onRunDemoScan,
+  onSaveLook,
+  scan,
+  scanStatus,
+  errorMsg,
+  faceBounds,
+  lastPhotoUri,
+  recommendations
+}: Props) {
   const [permission, requestPermission] = useCameraPermissions();
-  const [selectedId, setSelectedId] = useState(recommendations[0]?.id);
+  const [selectedId, setSelectedId] = useState(recommendations[0]?.id ?? '');
+  const [activeMode, setActiveMode] = useState<Mode>('Hair');
+  const [cameraSize, setCameraSize] = useState({ width: 1, height: 1 });
+  const [saveFeedback, setSaveFeedback] = useState(false);
+  const cameraRef = useRef<CameraView>(null);
+
   const selected = useMemo(
-    () => recommendations.find((item) => item.id === selectedId) ?? recommendations[0],
+    () => recommendations.find((r) => r.id === selectedId) ?? recommendations[0],
     [recommendations, selectedId]
   );
 
-  const startScan = () => {
-    onRunScan();
-  };
+  const handleCapture = useCallback(async () => {
+    if (!permission?.granted) {
+      onRunDemoScan();
+      return;
+    }
+    if (!cameraRef.current) return;
+
+    try {
+      const photo = await cameraRef.current.takePictureAsync({
+        base64: false,
+        quality: 0.8,
+        skipProcessing: false
+      });
+      if (!photo) return;
+
+      const detections = await FaceDetector.detectFacesAsync(photo.uri, {
+        mode: FaceDetector.FaceDetectorMode.accurate,
+        detectLandmarks: FaceDetector.FaceDetectorLandmarks.all,
+        runClassifications: FaceDetector.FaceDetectorClassifications.none
+      });
+
+      onRunRealScan(
+        photo.uri,
+        detections.faces as unknown as FaceDetection[],
+        photo.width,
+        photo.height
+      );
+    } catch {
+      onRunDemoScan();
+    }
+  }, [permission, onRunRealScan, onRunDemoScan]);
+
+  const handleSave = useCallback(() => {
+    if (!selected) return;
+    onSaveLook(selected.id, selected.name, lastPhotoUri ?? undefined);
+    setSaveFeedback(true);
+    setTimeout(() => setSaveFeedback(false), 2000);
+  }, [selected, lastPhotoUri, onSaveLook]);
+
+  const onCameraLayout = useCallback((e: LayoutChangeEvent) => {
+    const { width, height } = e.nativeEvent.layout;
+    setCameraSize({ width, height });
+  }, []);
+
+  const scanning = scanStatus === 'scanning';
 
   return (
     <View style={styles.root}>
-      <View style={styles.cameraMock}>
+      {/* ── Camera / preview panel ── */}
+      <View style={styles.cameraWrap} onLayout={onCameraLayout}>
         {permission?.granted ? (
-          <CameraView style={StyleSheet.absoluteFill} facing="front" />
-        ) : null}
-        {!permission?.granted ? <View style={styles.cameraFallback} /> : null}
+          <CameraView ref={cameraRef} style={StyleSheet.absoluteFill} facing="front" />
+        ) : (
+          <View style={styles.cameraFallback} />
+        )}
+
+        {/* Face guide oval */}
         <View style={styles.faceGuide} />
+
+        {/* Animated scan ring */}
+        <ScanRingOverlay scanning={scanning} />
+
+        {/* Hairstyle overlay (only when scan complete and style selected) */}
+        {scanStatus === 'complete' && selected && (
+          <HairstyleOverlay
+            styleId={selected.id}
+            faceBounds={faceBounds ?? undefined}
+            containerWidth={cameraSize.width}
+            containerHeight={cameraSize.height}
+          />
+        )}
+
+        {/* Scan result pill */}
         <View style={styles.overlayTop}>
-          <Text style={styles.scanPill}>
-            {scanStatus === 'scanning' ? 'Scanning face structure...' : `${scan.faceShape} face / ${Math.round(scan.confidence * 100)}%`}
-          </Text>
+          {scanning ? (
+            <View style={styles.scanPillRow}>
+              <ActivityIndicator size="small" color={theme.colors.accent} />
+              <Text style={styles.scanPill}>Scanning face structure...</Text>
+            </View>
+          ) : (
+            <Text style={[styles.scanPill, errorMsg ? styles.scanPillError : null]}>
+              {errorMsg
+                ? '⚠ No face detected'
+                : `${scan.faceShape} face · ${Math.round(scan.confidence * 100)}% conf`}
+            </Text>
+          )}
         </View>
+
+        {/* Bottom controls */}
         <View style={styles.overlayBottom}>
-          <Pressable style={styles.secondaryButton} onPress={permission?.granted ? startScan : requestPermission}>
-            <Text style={styles.secondaryButtonText}>{permission?.granted ? 'Rescan' : 'Enable camera'}</Text>
+          <Pressable
+            style={styles.secondaryButton}
+            onPress={permission?.granted ? handleCapture : requestPermission}
+          >
+            <Text style={styles.secondaryButtonText}>
+              {permission?.granted ? 'Rescan' : 'Enable camera'}
+            </Text>
           </Pressable>
-          <Pressable style={styles.captureButton} onPress={startScan}>
-            <View style={styles.captureInner} />
+
+          <Pressable style={styles.captureButton} onPress={handleCapture} disabled={scanning}>
+            <View style={[styles.captureInner, scanning && styles.captureInnerDisabled]} />
           </Pressable>
-          <Pressable style={styles.secondaryButton}>
-            <Text style={styles.secondaryButtonText}>Save</Text>
+
+          <Pressable style={[styles.secondaryButton, saveFeedback && styles.saveSuccess]} onPress={handleSave}>
+            <Text style={[styles.secondaryButtonText, saveFeedback && styles.saveSuccessText]}>
+              {saveFeedback ? '✓ Saved' : 'Save'}
+            </Text>
           </Pressable>
         </View>
-        {!permission?.granted ? (
+
+        {/* Permission card */}
+        {!permission?.granted && !scanning && (
           <View style={styles.permissionCard}>
             <Text style={styles.permissionTitle}>Camera access</Text>
-            <Text style={styles.permissionText}>Enable camera to preview hairstyles on your face.</Text>
+            <Text style={styles.permissionText}>
+              Enable camera to scan your face and preview hairstyles in real time.
+            </Text>
+            <Pressable style={styles.permissionButton} onPress={requestPermission}>
+              <Text style={styles.permissionButtonText}>Enable camera</Text>
+            </Pressable>
           </View>
-        ) : null}
+        )}
       </View>
 
+      {/* ── Mode chips ── */}
       <View style={styles.modes}>
-        <Text style={[styles.modeChip, styles.modeChipActive]}>Hair</Text>
-        <Text style={styles.modeChip}>Beard</Text>
-        <Text style={styles.modeChip}>Hairline</Text>
-        <Text style={styles.modeChip}>Transplant preview</Text>
+        {MODES.map((m) => (
+          <Pressable key={m} onPress={() => setActiveMode(m)}>
+            <Text style={[styles.modeChip, activeMode === m && styles.modeChipActive]}>{m}</Text>
+          </Pressable>
+        ))}
       </View>
 
+      {/* ── Error banner ── */}
+      {errorMsg && (
+        <View style={styles.errorBanner}>
+          <Text style={styles.errorText}>{errorMsg}</Text>
+        </View>
+      )}
+
+      {/* ── Hairstyle recommendation sheet ── */}
       <View style={styles.sheet}>
-        <Text style={styles.sheetTitle}>Best for your {scan.faceShape} face</Text>
+        <Text style={styles.sheetTitle}>
+          Best for your <Text style={styles.accent}>{scan.faceShape}</Text> face
+        </Text>
         <FlatList
           horizontal
           data={recommendations}
           keyExtractor={(item) => item.id}
           contentContainerStyle={styles.list}
+          showsHorizontalScrollIndicator={false}
           renderItem={({ item }) => (
             <Pressable
               onPress={() => setSelectedId(item.id)}
               style={[styles.card, selected?.id === item.id && styles.cardSelected]}
             >
               <Text style={styles.cardTitle}>{item.name}</Text>
-              <Text style={styles.cardMeta}>{item.length} / {item.category}</Text>
-              <Text style={styles.cardBody}>{item.reason}</Text>
+              <Text style={styles.cardMeta}>
+                {item.length} · {item.category}
+              </Text>
+              <Text style={styles.cardBody} numberOfLines={3}>
+                {item.reason}
+              </Text>
             </Pressable>
           )}
         />
-        {selected ? (
+        {selected && (
           <View style={styles.detailCard}>
-            <Text style={styles.detailLabel}>Barber note</Text>
+            <Text style={styles.detailLabel}>✂ Barber note</Text>
             <Text style={styles.detailText}>{selected.barberNote}</Text>
-            {selected.caution ? <Text style={styles.caution}>{selected.caution}</Text> : null}
+            {selected.caution ? (
+              <Text style={styles.caution}>⚠ {selected.caution}</Text>
+            ) : null}
           </View>
-        ) : null}
+        )}
       </View>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  root: {
-    flex: 1
-  },
-  cameraMock: {
+  root: { flex: 1 },
+  cameraWrap: {
     alignItems: 'center',
     backgroundColor: '#07080B',
     borderBottomColor: theme.colors.border,
@@ -113,9 +258,9 @@ const styles = StyleSheet.create({
     backgroundColor: '#07080B'
   },
   faceGuide: {
-    borderColor: theme.colors.accent,
+    borderColor: `${theme.colors.accent}55`,
     borderRadius: 120,
-    borderWidth: 2,
+    borderWidth: 1.5,
     height: 240,
     opacity: 0.7,
     position: 'absolute',
@@ -127,9 +272,21 @@ const styles = StyleSheet.create({
     right: theme.spacing.md,
     top: theme.spacing.md
   },
+  scanPillRow: {
+    alignItems: 'center',
+    alignSelf: 'center',
+    flexDirection: 'row',
+    gap: 8,
+    backgroundColor: 'rgba(15,17,21,0.82)',
+    borderColor: theme.colors.border,
+    borderRadius: 999,
+    borderWidth: 1,
+    paddingHorizontal: 14,
+    paddingVertical: 9
+  },
   scanPill: {
     alignSelf: 'center',
-    backgroundColor: 'rgba(15,17,21,0.78)',
+    backgroundColor: 'rgba(15,17,21,0.82)',
     borderColor: theme.colors.border,
     borderRadius: 999,
     borderWidth: 1,
@@ -140,6 +297,10 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
     paddingVertical: 9,
     textTransform: 'capitalize'
+  },
+  scanPillError: {
+    borderColor: theme.colors.warning,
+    color: theme.colors.warning
   },
   overlayBottom: {
     alignItems: 'center',
@@ -164,9 +325,12 @@ const styles = StyleSheet.create({
     height: 56,
     width: 56
   },
+  captureInnerDisabled: {
+    backgroundColor: theme.colors.border
+  },
   secondaryButton: {
     alignItems: 'center',
-    backgroundColor: 'rgba(15,17,21,0.78)',
+    backgroundColor: 'rgba(15,17,21,0.82)',
     borderColor: theme.colors.border,
     borderRadius: 999,
     borderWidth: 1,
@@ -179,14 +343,21 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: '800'
   },
+  saveSuccess: {
+    backgroundColor: `${theme.colors.success}22`,
+    borderColor: theme.colors.success
+  },
+  saveSuccessText: {
+    color: theme.colors.success
+  },
   permissionCard: {
-    backgroundColor: 'rgba(15,17,21,0.88)',
+    backgroundColor: 'rgba(15,17,21,0.92)',
     borderColor: theme.colors.border,
     borderRadius: theme.radius.md,
     borderWidth: 1,
     padding: theme.spacing.md,
     position: 'absolute',
-    width: '78%'
+    width: '80%'
   },
   permissionTitle: {
     color: theme.colors.text,
@@ -198,8 +369,20 @@ const styles = StyleSheet.create({
     lineHeight: 20,
     marginTop: 8
   },
+  permissionButton: {
+    alignItems: 'center',
+    backgroundColor: theme.colors.accent,
+    borderRadius: theme.radius.sm,
+    marginTop: 14,
+    paddingVertical: 12
+  },
+  permissionButtonText: {
+    color: '#16110A',
+    fontWeight: '800'
+  },
   modes: {
     flexDirection: 'row',
+    flexWrap: 'wrap',
     gap: theme.spacing.sm,
     paddingHorizontal: theme.spacing.md,
     paddingTop: theme.spacing.md
@@ -218,7 +401,22 @@ const styles = StyleSheet.create({
   },
   modeChipActive: {
     backgroundColor: theme.colors.accent,
+    borderColor: theme.colors.accent,
     color: '#16110A'
+  },
+  errorBanner: {
+    backgroundColor: `${theme.colors.warning}18`,
+    borderColor: `${theme.colors.warning}55`,
+    borderRadius: theme.radius.sm,
+    borderWidth: 1,
+    marginHorizontal: theme.spacing.md,
+    marginTop: theme.spacing.sm,
+    padding: theme.spacing.sm
+  },
+  errorText: {
+    color: theme.colors.warning,
+    fontSize: 13,
+    lineHeight: 19
   },
   sheet: {
     padding: theme.spacing.md
@@ -229,9 +427,11 @@ const styles = StyleSheet.create({
     fontWeight: '800',
     marginBottom: theme.spacing.md
   },
-  list: {
-    gap: theme.spacing.sm
+  accent: {
+    color: theme.colors.accent,
+    textTransform: 'capitalize'
   },
+  list: { gap: theme.spacing.sm },
   card: {
     backgroundColor: theme.colors.surface,
     borderColor: theme.colors.border,
@@ -250,7 +450,7 @@ const styles = StyleSheet.create({
   },
   cardMeta: {
     color: theme.colors.accent,
-    fontSize: 12,
+    fontSize: 11,
     fontWeight: '700',
     marginTop: 5,
     textTransform: 'uppercase'

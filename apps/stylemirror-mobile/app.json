@@ -2,7 +2,7 @@
   "expo": {
     "name": "StyleMirror",
     "slug": "stylemirror",
-    "version": "0.1.0",
+    "version": "0.2.0",
     "orientation": "portrait",
     "scheme": "stylemirror",
     "userInterfaceStyle": "dark",
@@ -10,12 +10,38 @@
       "backgroundColor": "#0F1115"
     },
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "infoPlist": {
+        "NSCameraUsageDescription": "StyleMirror uses the camera to scan your face structure and recommend hairstyles. No images are uploaded.",
+        "NSPhotoLibraryAddUsageDescription": "StyleMirror saves your hairstyle previews to your photo library."
+      }
     },
     "android": {
       "adaptiveIcon": {
         "backgroundColor": "#0F1115"
-      }
-    }
+      },
+      "permissions": [
+        "android.permission.CAMERA",
+        "android.permission.READ_MEDIA_IMAGES",
+        "android.permission.WRITE_EXTERNAL_STORAGE"
+      ]
+    },
+    "plugins": [
+      "expo-face-detector",
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "StyleMirror uses the camera to scan your face shape and recommend hairstyles."
+        }
+      ],
+      [
+        "expo-media-library",
+        {
+          "photosPermission": "Allow StyleMirror to save your hairstyle previews.",
+          "savePhotosPermission": "Allow StyleMirror to save your hairstyle previews.",
+          "isAccessMediaLocationEnabled": true
+        }
+      ]
+    ]
   }
 }
