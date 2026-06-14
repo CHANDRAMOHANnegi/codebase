@@ -6,22 +6,22 @@ import { HairstyleRecommendation } from '@stylemirror/style-engine';
 import { theme } from '../theme/theme';
 
 type Props = {
+  onRunScan: () => void;
   scan: FaceScanResult;
+  scanStatus: 'ready' | 'scanning' | 'complete';
   recommendations: HairstyleRecommendation[];
 };
 
-export function CameraTryOnScreen({ scan, recommendations }: Props) {
+export function CameraTryOnScreen({ onRunScan, scan, scanStatus, recommendations }: Props) {
   const [permission, requestPermission] = useCameraPermissions();
   const [selectedId, setSelectedId] = useState(recommendations[0]?.id);
-  const [scanState, setScanState] = useState<'idle' | 'scanning' | 'ready'>('ready');
   const selected = useMemo(
     () => recommendations.find((item) => item.id === selectedId) ?? recommendations[0],
     [recommendations, selectedId]
   );
 
   const startScan = () => {
-    setScanState('scanning');
-    setTimeout(() => setScanState('ready'), 1200);
+    onRunScan();
   };
 
   return (
@@ -34,7 +34,7 @@ export function CameraTryOnScreen({ scan, recommendations }: Props) {
         <View style={styles.faceGuide} />
         <View style={styles.overlayTop}>
           <Text style={styles.scanPill}>
-            {scanState === 'scanning' ? 'Scanning face structure...' : `${scan.faceShape} face / ${Math.round(scan.confidence * 100)}%`}
+            {scanStatus === 'scanning' ? 'Scanning face structure...' : `${scan.faceShape} face / ${Math.round(scan.confidence * 100)}%`}
           </Text>
         </View>
         <View style={styles.overlayBottom}>

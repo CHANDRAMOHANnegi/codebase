@@ -32,6 +32,23 @@ export type FaceMeasurements = {
   chinRoundness: number;
 };
 
+export type Point2D = {
+  x: number;
+  y: number;
+};
+
+export type FaceLandmarks = {
+  foreheadLeft: Point2D;
+  foreheadRight: Point2D;
+  cheekLeft: Point2D;
+  cheekRight: Point2D;
+  jawLeft: Point2D;
+  jawRight: Point2D;
+  chin: Point2D;
+  hairlineCenter: Point2D;
+  browCenter: Point2D;
+};
+
 export type FaceScanResult = {
   faceShape: FaceShape;
   hairlineStage: HairlineStage;
