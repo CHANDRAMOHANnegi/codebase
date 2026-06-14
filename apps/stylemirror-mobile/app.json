@@ -17,6 +17,7 @@
       }
     },
     "android": {
+      "package": "com.stylemirror.app",
       "adaptiveIcon": {
         "backgroundColor": "#0F1115"
       },
@@ -27,7 +28,6 @@
       ]
     },
     "plugins": [
-      "expo-face-detector",
       [
         "expo-camera",
         {
