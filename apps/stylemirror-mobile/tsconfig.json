@@ -1,0 +1,14 @@
+{
+  "compilerOptions": {
+    "strict": true,
+    "jsx": "react-native",
+    "moduleResolution": "bundler",
+    "baseUrl": ".",
+    "paths": {
+      "@stylemirror/face-analysis": ["../../packages/face-analysis/src"],
+      "@stylemirror/shared": ["../../packages/shared/src"],
+      "@stylemirror/style-engine": ["../../packages/style-engine/src"]
+    }
+  },
+  "extends": "expo/tsconfig.base"
+}

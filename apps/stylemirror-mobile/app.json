@@ -1,0 +1,21 @@
+{
+  "expo": {
+    "name": "StyleMirror",
+    "slug": "stylemirror",
+    "version": "0.1.0",
+    "orientation": "portrait",
+    "scheme": "stylemirror",
+    "userInterfaceStyle": "dark",
+    "splash": {
+      "backgroundColor": "#0F1115"
+    },
+    "ios": {
+      "supportsTablet": true
+    },
+    "android": {
+      "adaptiveIcon": {
+        "backgroundColor": "#0F1115"
+      }
+    }
+  }
+}

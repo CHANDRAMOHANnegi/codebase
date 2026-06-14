@@ -1,0 +1,13 @@
+{
+  "name": "stylemirror-codebase",
+  "private": true,
+  "version": "0.1.0",
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "typecheck": "npm run typecheck --workspace @stylemirror/mobile",
+    "start:mobile": "npm run start --workspace @stylemirror/mobile"
+  }
+}
