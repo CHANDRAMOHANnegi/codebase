@@ -131,6 +131,17 @@ On macOS with Homebrew:
 JAVA_HOME=/opt/homebrew/Cellar/openjdk@17/17.0.18/libexec/openjdk.jdk/Contents/Home npx expo run:android
 ```
 
+### Run a stable Android demo with embedded JavaScript
+
+Use this when Metro/dev-client gets stale or you want to test the same app bundle an installed APK will run:
+
+```bash
+cd codebase
+npm run android:mobile:release
+```
+
+This builds a release APK, embeds the current `index.android.bundle`, installs it on the emulator, and runs without depending on Metro for JavaScript.
+
 ### TypeScript check
 
 ```bash
@@ -228,6 +239,7 @@ default                            → oval
 | `1659635` | Surface style preference in try-on |
 | `1dbb65a` | Cover style recommendation rules |
 | `63475c0` | Align Expo SDK dependency versions |
+| `7968643` | Add reliable Android release run scripts |
 
 ---
 
