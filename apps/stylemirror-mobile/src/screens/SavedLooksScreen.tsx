@@ -1,41 +1,89 @@
-import { ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Alert, Image, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { useSavedLooks } from '../features/saved/useSavedLooks';
 import { theme } from '../theme/theme';
 
-const savedLooks = [
-  {
-    id: 'barber-reference',
-    title: 'Barber Reference',
-    subtitle: 'Clean Side Fade / diamond face',
-    status: 'Ready to share'
-  },
-  {
-    id: 'hairline-preview',
-    title: 'Hairline Preview',
-    subtitle: 'Conservative mature hairline',
-    status: 'Consultation note'
-  }
-];
-
 export function SavedLooksScreen() {
+  const { looks, loading, deleteLook, clearAll } = useSavedLooks();
+
+  const handleDelete = (id: string, title: string) => {
+    Alert.alert('Remove look', `Remove "${title}" from saved looks?`, [
+      { text: 'Cancel', style: 'cancel' },
+      { text: 'Remove', style: 'destructive', onPress: () => deleteLook(id) }
+    ]);
+  };
+
+  const handleClearAll = () => {
+    Alert.alert('Clear all', 'Remove all saved looks?', [
+      { text: 'Cancel', style: 'cancel' },
+      { text: 'Clear all', style: 'destructive', onPress: () => clearAll() }
+    ]);
+  };
+
   return (
     <ScrollView contentContainerStyle={styles.root}>
-      <Text style={styles.title}>Saved looks</Text>
-      <Text style={styles.body}>Keep haircut previews, barber notes, and consultation references in one place.</Text>
-      {savedLooks.map((look) => (
+      <View style={styles.header}>
+        <View>
+          <Text style={styles.title}>Saved looks</Text>
+          <Text style={styles.body}>
+            Your haircut previews, barber notes, and consultation references.
+          </Text>
+        </View>
+        {looks.length > 0 && (
+          <Pressable onPress={handleClearAll} style={styles.clearButton}>
+            <Text style={styles.clearText}>Clear all</Text>
+          </Pressable>
+        )}
+      </View>
+
+      {loading && (
+        <View style={styles.emptyState}>
+          <Text style={styles.emptyIcon}>⏳</Text>
+          <Text style={styles.emptyTitle}>Loading...</Text>
+        </View>
+      )}
+
+      {!loading && looks.length === 0 && (
+        <View style={styles.emptyState}>
+          <Text style={styles.emptyIcon}>✂</Text>
+          <Text style={styles.emptyTitle}>No saved looks yet</Text>
+          <Text style={styles.emptyBody}>
+            Scan your face, pick a hairstyle, and tap Save to keep a reference for your barber.
+          </Text>
+        </View>
+      )}
+
+      {looks.map((look) => (
         <View key={look.id} style={styles.card}>
-          <View style={styles.thumb}>
-            <Text style={styles.thumbText}>{look.title.slice(0, 1)}</Text>
-          </View>
+          {look.photoUri ? (
+            <Image source={{ uri: look.photoUri }} style={styles.thumb} resizeMode="cover" />
+          ) : (
+            <View style={styles.thumbPlaceholder}>
+              <Text style={styles.thumbIcon}>{look.title.slice(0, 1)}</Text>
+            </View>
+          )}
           <View style={styles.cardText}>
             <Text style={styles.cardTitle}>{look.title}</Text>
             <Text style={styles.cardSubtitle}>{look.subtitle}</Text>
             <Text style={styles.status}>{look.status}</Text>
+            <Text style={styles.savedAt}>
+              {new Date(look.savedAt).toLocaleDateString('en-US', {
+                month: 'short',
+                day: 'numeric',
+                year: 'numeric'
+              })}
+            </Text>
           </View>
+          <Pressable onPress={() => handleDelete(look.id, look.title)} style={styles.deleteButton}>
+            <Text style={styles.deleteText}>✕</Text>
+          </Pressable>
         </View>
       ))}
+
       <View style={styles.note}>
-        <Text style={styles.noteTitle}>Next build step</Text>
-        <Text style={styles.noteBody}>Capture real camera frames and save the selected style overlay here.</Text>
+        <Text style={styles.noteTitle}>💡 Tip</Text>
+        <Text style={styles.noteBody}>
+          Take a screenshot of your saved look or share your barber note before your next appointment.
+        </Text>
       </View>
     </ScrollView>
   );
@@ -46,6 +94,12 @@ const styles = StyleSheet.create({
     flexGrow: 1,
     padding: theme.spacing.lg
   },
+  header: {
+    alignItems: 'flex-start',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: theme.spacing.md
+  },
   title: {
     color: theme.colors.text,
     fontSize: 28,
@@ -53,9 +107,40 @@ const styles = StyleSheet.create({
   },
   body: {
     color: theme.colors.textMuted,
-    fontSize: 16,
-    lineHeight: 24,
-    marginTop: theme.spacing.sm
+    fontSize: 14,
+    lineHeight: 20,
+    marginTop: 4,
+    maxWidth: '80%'
+  },
+  clearButton: {
+    paddingHorizontal: 10,
+    paddingVertical: 6
+  },
+  clearText: {
+    color: theme.colors.warning,
+    fontSize: 13,
+    fontWeight: '700'
+  },
+  emptyState: {
+    alignItems: 'center',
+    paddingVertical: theme.spacing.xl
+  },
+  emptyIcon: {
+    fontSize: 40,
+    marginBottom: theme.spacing.md
+  },
+  emptyTitle: {
+    color: theme.colors.text,
+    fontSize: 20,
+    fontWeight: '800'
+  },
+  emptyBody: {
+    color: theme.colors.textMuted,
+    fontSize: 14,
+    lineHeight: 21,
+    marginTop: theme.spacing.sm,
+    textAlign: 'center',
+    maxWidth: '80%'
   },
   card: {
     alignItems: 'center',
@@ -65,10 +150,15 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     flexDirection: 'row',
     gap: theme.spacing.md,
-    marginTop: theme.spacing.md,
+    marginBottom: theme.spacing.md,
     padding: theme.spacing.md
   },
   thumb: {
+    borderRadius: theme.radius.sm,
+    height: 72,
+    width: 72
+  },
+  thumbPlaceholder: {
     alignItems: 'center',
     backgroundColor: theme.colors.accentSoft,
     borderRadius: theme.radius.md,
@@ -76,7 +166,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     width: 72
   },
-  thumbText: {
+  thumbIcon: {
     color: theme.colors.accent,
     fontSize: 28,
     fontWeight: '900'
@@ -91,6 +181,7 @@ const styles = StyleSheet.create({
   },
   cardSubtitle: {
     color: theme.colors.textMuted,
+    fontSize: 13,
     marginTop: 4
   },
   status: {
@@ -99,6 +190,18 @@ const styles = StyleSheet.create({
     fontWeight: '900',
     marginTop: 8,
     textTransform: 'uppercase'
+  },
+  savedAt: {
+    color: theme.colors.textMuted,
+    fontSize: 11,
+    marginTop: 4
+  },
+  deleteButton: {
+    padding: 8
+  },
+  deleteText: {
+    color: theme.colors.textMuted,
+    fontSize: 16
   },
   note: {
     backgroundColor: theme.colors.surfaceRaised,
