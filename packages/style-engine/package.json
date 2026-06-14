@@ -2,5 +2,8 @@
   "name": "@stylemirror/style-engine",
   "private": true,
   "version": "0.1.0",
-  "main": "src/index.ts"
+  "main": "src/index.ts",
+  "scripts": {
+    "test": "node -r sucrase/register src/index.test.ts"
+  }
 }

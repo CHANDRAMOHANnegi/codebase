@@ -8,6 +8,7 @@
   ],
   "scripts": {
     "typecheck": "npm run typecheck --workspace @stylemirror/mobile",
+    "test:style-engine": "npm test --workspace @stylemirror/style-engine",
     "start:mobile": "npm run start --workspace @stylemirror/mobile"
   }
 }
