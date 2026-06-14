@@ -7,7 +7,11 @@ type StyleId =
   | 'medium_layered'
   | 'side_swept_fringe'
   | 'classic_side_part'
-  | 'conservative_hairline_preview';
+  | 'conservative_hairline_preview'
+  | 'soft_pixie'
+  | 'collarbone_lob'
+  | 'curtain_bangs_layers'
+  | 'low_volume_bun';
 
 type Props = {
   styleId: StyleId | string;
@@ -31,6 +35,8 @@ function styleColor(styleId: string): string {
   if (styleId.includes('medium') || styleId.includes('layer')) return '#A8EDBE';
   if (styleId.includes('classic') || styleId.includes('part')) return '#C8A8ED';
   if (styleId.includes('transplant') || styleId.includes('hairline')) return '#EDC8A8';
+  if (styleId.includes('pixie') || styleId.includes('lob')) return '#F2A7C6';
+  if (styleId.includes('bang') || styleId.includes('bun')) return '#BFA2F2';
   return theme.colors.accent;
 }
 
@@ -82,7 +88,12 @@ export function HairstyleOverlay({ styleId, faceBounds, containerWidth, containe
       />
 
       {/* Side pieces */}
-      {(styleId === 'medium_layered' || styleId === 'side_swept_fringe') && (
+      {(
+        styleId === 'medium_layered' ||
+        styleId === 'side_swept_fringe' ||
+        styleId === 'collarbone_lob' ||
+        styleId === 'curtain_bangs_layers'
+      ) && (
         <>
           <View
             style={[
@@ -116,7 +127,7 @@ export function HairstyleOverlay({ styleId, faceBounds, containerWidth, containe
       )}
 
       {/* Fringe for fringe/crop styles */}
-      {(styleId === 'side_swept_fringe' || styleId === 'textured_crop') && (
+      {(styleId === 'side_swept_fringe' || styleId === 'textured_crop' || styleId === 'curtain_bangs_layers') && (
         <View
           style={[
             styles.fringe,

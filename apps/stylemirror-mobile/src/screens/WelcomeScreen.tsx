@@ -1,16 +1,20 @@
 import { useState } from 'react';
 import { Animated, Pressable, StyleSheet, Text, View } from 'react-native';
+import { StylePreference } from '@stylemirror/shared';
 import { theme } from '../theme/theme';
 
-type StylePref = 'Men' | 'Women' | 'All styles';
-const PREFS: StylePref[] = ['Men', 'Women', 'All styles'];
+const PREFS: Array<{ label: string; value: StylePreference }> = [
+  { label: 'Men', value: 'men' },
+  { label: 'Women', value: 'women' },
+  { label: 'All styles', value: 'all' }
+];
 
 type Props = {
-  onStart: (pref: StylePref) => void;
+  onStart: (pref: StylePreference) => void;
 };
 
 export function WelcomeScreen({ onStart }: Props) {
-  const [selected, setSelected] = useState<StylePref>('All styles');
+  const [selected, setSelected] = useState<StylePreference>('all');
 
   return (
     <View style={styles.root}>
@@ -41,11 +45,11 @@ export function WelcomeScreen({ onStart }: Props) {
         <View style={styles.chips}>
           {PREFS.map((p) => (
             <Pressable
-              key={p}
-              onPress={() => setSelected(p)}
-              style={[styles.chip, selected === p && styles.chipSelected]}
+              key={p.value}
+              onPress={() => setSelected(p.value)}
+              style={[styles.chip, selected === p.value && styles.chipSelected]}
             >
-              <Text style={[styles.chipText, selected === p && styles.chipTextSelected]}>{p}</Text>
+              <Text style={[styles.chipText, selected === p.value && styles.chipTextSelected]}>{p.label}</Text>
             </Pressable>
           ))}
         </View>

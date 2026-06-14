@@ -1,6 +1,7 @@
 import { StatusBar } from 'expo-status-bar';
 import { useMemo, useState } from 'react';
 import { SafeAreaView, StyleSheet, View } from 'react-native';
+import { StylePreference } from '@stylemirror/shared';
 import { recommendHairstyles } from '@stylemirror/style-engine';
 import { AppHeader } from './src/components/AppHeader';
 import { BottomTabs, TabKey } from './src/components/BottomTabs';
@@ -15,12 +16,16 @@ import { theme } from './src/theme/theme';
 export default function App() {
   const [tab, setTab] = useState<TabKey>('tryOn');
   const [hasStarted, setHasStarted] = useState(false);
+  const [stylePreference, setStylePreference] = useState<StylePreference>('all');
 
   const { runRealScan, runDemoScan, scan, status, errorMsg, faceBounds, lastPhotoUri } =
     useFaceScan();
   const { saveLook } = useSavedLooks();
 
-  const recommendations = useMemo(() => recommendHairstyles(scan), [scan]);
+  const recommendations = useMemo(
+    () => recommendHairstyles(scan, stylePreference),
+    [scan, stylePreference]
+  );
 
   const handleSaveLook = (styleId: string, styleName: string, photoUri?: string) => {
     saveLook({ faceShape: scan.faceShape, styleId, styleName, photoUri });
@@ -33,7 +38,12 @@ export default function App() {
     return (
       <SafeAreaView style={styles.root}>
         <StatusBar style="light" />
-        <WelcomeScreen onStart={(_pref) => setHasStarted(true)} />
+        <WelcomeScreen
+          onStart={(pref) => {
+            setStylePreference(pref);
+            setHasStarted(true);
+          }}
+        />
       </SafeAreaView>
     );
   }
