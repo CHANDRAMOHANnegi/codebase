@@ -1,6 +1,6 @@
 import * as FaceDetector from 'expo-face-detector';
 import { CameraView, useCameraPermissions } from 'expo-camera';
-import { useCallback, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   ActivityIndicator,
   FlatList,
@@ -10,7 +10,7 @@ import {
   Text,
   View
 } from 'react-native';
-import { FaceScanResult } from '@stylemirror/shared';
+import { FaceScanResult, StylePreference } from '@stylemirror/shared';
 import { HairstyleRecommendation } from '@stylemirror/style-engine';
 import { HairstyleOverlay } from '../components/HairstyleOverlay';
 import { ScanRingOverlay } from '../components/ScanRingOverlay';
@@ -33,10 +33,23 @@ type Props = {
   faceBounds: NormalizedFaceBounds | null;
   lastPhotoUri: string | null;
   recommendations: HairstyleRecommendation[];
+  stylePreference: StylePreference;
 };
 
 type Mode = 'Hair' | 'Beard' | 'Hairline' | 'Transplant preview';
 const MODES: Mode[] = ['Hair', 'Beard', 'Hairline', 'Transplant preview'];
+
+const preferenceLabels: Record<StylePreference, string> = {
+  all: 'All styles',
+  men: 'Men',
+  women: 'Women'
+};
+
+const audienceLabels: Record<HairstyleRecommendation['audience'], string> = {
+  men: 'Men',
+  women: 'Women',
+  unisex: 'Unisex'
+};
 
 export function CameraTryOnScreen({
   onRunRealScan,
@@ -47,7 +60,8 @@ export function CameraTryOnScreen({
   errorMsg,
   faceBounds,
   lastPhotoUri,
-  recommendations
+  recommendations,
+  stylePreference
 }: Props) {
   const [permission, requestPermission] = useCameraPermissions();
   const [selectedId, setSelectedId] = useState(recommendations[0]?.id ?? '');
@@ -60,6 +74,17 @@ export function CameraTryOnScreen({
     () => recommendations.find((r) => r.id === selectedId) ?? recommendations[0],
     [recommendations, selectedId]
   );
+
+  useEffect(() => {
+    if (!recommendations.length) {
+      setSelectedId('');
+      return;
+    }
+
+    if (!recommendations.some((r) => r.id === selectedId)) {
+      setSelectedId(recommendations[0].id);
+    }
+  }, [recommendations, selectedId]);
 
   const handleCapture = useCallback(async () => {
     if (!permission?.granted) {
@@ -211,6 +236,11 @@ export function CameraTryOnScreen({
         ))}
       </View>
 
+      <View style={styles.preferenceRow}>
+        <Text style={styles.preferenceText}>Showing: {preferenceLabels[stylePreference]}</Text>
+        <Text style={styles.preferenceCount}>{recommendations.length} matches</Text>
+      </View>
+
       {/* ── Error banner ── */}
       {errorMsg && (
         <View style={styles.errorBanner}>
@@ -251,7 +281,7 @@ export function CameraTryOnScreen({
             >
               <Text style={styles.cardTitle}>{item.name}</Text>
               <Text style={styles.cardMeta}>
-                {item.length} · {item.category}
+                {audienceLabels[item.audience]} · {item.length} · {item.category}
               </Text>
               <Text style={styles.cardBody} numberOfLines={3}>
                 {item.reason}
@@ -436,6 +466,23 @@ const styles = StyleSheet.create({
     backgroundColor: theme.colors.accent,
     borderColor: theme.colors.accent,
     color: '#16110A'
+  },
+  preferenceRow: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginHorizontal: theme.spacing.md,
+    marginTop: theme.spacing.sm
+  },
+  preferenceText: {
+    color: theme.colors.text,
+    fontSize: 12,
+    fontWeight: '800'
+  },
+  preferenceCount: {
+    color: theme.colors.textMuted,
+    fontSize: 12,
+    fontWeight: '700'
   },
   errorBanner: {
     backgroundColor: `${theme.colors.warning}18`,

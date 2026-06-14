@@ -64,6 +64,7 @@ export default function App() {
             errorMsg={errorMsg}
             faceBounds={faceBounds}
             lastPhotoUri={lastPhotoUri}
+            stylePreference={stylePreference}
           />
         ) : null}
         {tab === 'scan' ? (
