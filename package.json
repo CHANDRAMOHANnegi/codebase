@@ -10,5 +10,9 @@
     "typecheck": "npm run typecheck --workspace @stylemirror/mobile",
     "test:style-engine": "npm test --workspace @stylemirror/style-engine",
     "start:mobile": "npm run start --workspace @stylemirror/mobile"
+  },
+  "devDependencies": {
+    "@types/react": "~18.2.79",
+    "typescript": "~5.3.3"
   }
 }
