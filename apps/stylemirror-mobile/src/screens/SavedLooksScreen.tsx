@@ -128,10 +128,15 @@ export function SavedLooksScreen() {
                   <Text style={styles.previewPlaceholderText}>No photo saved</Text>
                 </View>
               )}
+              <View
+                style={[styles.previewHead, Boolean(selectedLook?.photoUri) && styles.previewHeadOverPhoto]}
+                pointerEvents="none"
+              />
               <View style={styles.facePreviewGuide} pointerEvents="none" />
               {selectedLook && (
                 <HairstyleOverlay
                   styleId={selectedLook.styleId}
+                  faceBounds={{ x: 0.29, y: 0.31, width: 0.42, height: 0.56 }}
                   containerWidth={previewSize.width}
                   containerHeight={previewSize.height}
                 />
@@ -369,6 +374,20 @@ const styles = StyleSheet.create({
   previewPlaceholderText: {
     color: theme.colors.textMuted,
     fontWeight: '800'
+  },
+  previewHead: {
+    alignSelf: 'center',
+    backgroundColor: '#D8B18A',
+    borderColor: '#F1D6B8',
+    borderRadius: 92,
+    borderWidth: 2,
+    height: 218,
+    marginTop: 126,
+    position: 'absolute',
+    width: 166
+  },
+  previewHeadOverPhoto: {
+    opacity: 0.2
   },
   facePreviewGuide: {
     alignSelf: 'center',

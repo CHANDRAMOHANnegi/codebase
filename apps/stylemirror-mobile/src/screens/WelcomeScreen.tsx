@@ -11,9 +11,10 @@ const PREFS: Array<{ label: string; value: StylePreference }> = [
 
 type Props = {
   onStart: (pref: StylePreference) => void;
+  onOpenSaved: () => void;
 };
 
-export function WelcomeScreen({ onStart }: Props) {
+export function WelcomeScreen({ onStart, onOpenSaved }: Props) {
   const [selected, setSelected] = useState<StylePreference>('all');
 
   return (
@@ -56,6 +57,10 @@ export function WelcomeScreen({ onStart }: Props) {
 
         <Pressable style={styles.button} onPress={() => onStart(selected)}>
           <Text style={styles.buttonText}>Start face scan →</Text>
+        </Pressable>
+
+        <Pressable style={styles.secondaryButton} onPress={onOpenSaved}>
+          <Text style={styles.secondaryButtonText}>View saved looks</Text>
         </Pressable>
 
         <Text style={styles.disclaimer}>
@@ -168,6 +173,19 @@ const styles = StyleSheet.create({
   buttonText: {
     color: '#16110A',
     fontSize: 16,
+    fontWeight: '800'
+  },
+  secondaryButton: {
+    alignItems: 'center',
+    borderColor: theme.colors.border,
+    borderRadius: theme.radius.md,
+    borderWidth: 1,
+    marginTop: theme.spacing.sm,
+    paddingVertical: 13
+  },
+  secondaryButtonText: {
+    color: theme.colors.text,
+    fontSize: 14,
     fontWeight: '800'
   },
   disclaimer: {

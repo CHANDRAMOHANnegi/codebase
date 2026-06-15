@@ -40,6 +40,10 @@ export default function App() {
             setStylePreference(pref);
             setHasStarted(true);
           }}
+          onOpenSaved={() => {
+            setHasStarted(true);
+            setTab('saved');
+          }}
         />
       </SafeAreaView>
     );
