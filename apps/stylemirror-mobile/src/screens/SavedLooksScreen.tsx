@@ -66,13 +66,13 @@ export function SavedLooksScreen() {
 
       {looks.map((look) => (
         <Pressable key={look.id} style={styles.card} onPress={() => setSelectedLook(look)}>
-          {look.photoUri ? (
-            <Image source={{ uri: look.photoUri }} style={styles.thumb} resizeMode="cover" />
-          ) : (
-            <View style={styles.thumbPlaceholder}>
-              <Text style={styles.thumbIcon}>{look.title.slice(0, 1)}</Text>
-            </View>
-          )}
+          <View style={styles.thumbPreview}>
+            {look.photoUri ? (
+              <Image source={{ uri: look.photoUri }} style={styles.thumbImage} resizeMode="cover" />
+            ) : null}
+            <View style={styles.thumbHead} />
+            <View style={styles.thumbHair} />
+          </View>
           <View style={styles.cardText}>
             <Text style={styles.cardTitle}>{look.title}</Text>
             <Text style={styles.cardSubtitle}>{look.subtitle}</Text>
@@ -230,23 +230,40 @@ const styles = StyleSheet.create({
     marginBottom: theme.spacing.md,
     padding: theme.spacing.md
   },
-  thumb: {
-    borderRadius: theme.radius.sm,
-    height: 72,
-    width: 72
-  },
-  thumbPlaceholder: {
+  thumbPreview: {
     alignItems: 'center',
-    backgroundColor: theme.colors.accentSoft,
-    borderRadius: theme.radius.md,
+    backgroundColor: '#161A22',
+    borderColor: theme.colors.border,
+    borderRadius: theme.radius.sm,
+    borderWidth: 1,
     height: 72,
     justifyContent: 'center',
+    overflow: 'hidden',
     width: 72
   },
-  thumbIcon: {
-    color: theme.colors.accent,
-    fontSize: 28,
-    fontWeight: '900'
+  thumbImage: {
+    ...StyleSheet.absoluteFillObject,
+    opacity: 0.34
+  },
+  thumbHead: {
+    backgroundColor: '#D8B18A',
+    borderColor: '#F1D6B8',
+    borderRadius: 22,
+    borderWidth: 1,
+    height: 46,
+    marginTop: 18,
+    opacity: 0.64,
+    width: 34
+  },
+  thumbHair: {
+    backgroundColor: `${theme.colors.accent}66`,
+    borderColor: theme.colors.accent,
+    borderRadius: 18,
+    borderWidth: 1,
+    height: 20,
+    position: 'absolute',
+    top: 17,
+    width: 48
   },
   cardText: {
     flex: 1
