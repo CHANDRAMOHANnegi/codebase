@@ -254,7 +254,13 @@ export function CameraTryOnScreen({
             disabled={cameraDisabled}
           >
             <Text style={styles.secondaryButtonText}>
-              {permission?.granted ? (cameraStarting ? 'Starting' : 'Rescan') : 'Enable camera'}
+              {permission?.granted
+                ? cameraStarting
+                  ? 'Starting'
+                  : hasPhotoScan
+                    ? 'Rescan'
+                    : 'Scan'
+                : 'Enable camera'}
             </Text>
           </Pressable>
 
