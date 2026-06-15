@@ -181,7 +181,8 @@ export function CameraTryOnScreen({
   const captureBusy = captureStatus !== 'idle';
   const cameraStarting = Boolean(permission?.granted && !cameraReady);
   const cameraDisabled = scanning || captureBusy || cameraStarting;
-  const canSave = Boolean(selected && lastPhotoUri && scanStatus === 'complete');
+  const hasPhotoScan = Boolean(lastPhotoUri);
+  const canSave = Boolean(selected && hasPhotoScan && scanStatus === 'complete');
   const scanPillText = captureBusy
     ? captureStatus === 'capturing'
       ? 'Capturing photo...'
@@ -190,7 +191,11 @@ export function CameraTryOnScreen({
       ? 'Starting camera...'
       : errorMsg
         ? 'No face detected'
-        : `${scan.faceShape} face · ${Math.round(scan.confidence * 100)}% conf`;
+        : hasPhotoScan
+          ? `${scan.faceShape} face · ${Math.round(scan.confidence * 100)}% conf`
+          : permission?.granted
+            ? 'Ready to scan'
+            : 'Camera not enabled';
 
   return (
     <ScrollView
@@ -218,7 +223,7 @@ export function CameraTryOnScreen({
         <ScanRingOverlay scanning={scanning} />
 
         {/* Hairstyle overlay (only when scan complete and style selected) */}
-        {scanStatus === 'complete' && selected && (
+        {hasPhotoScan && scanStatus === 'complete' && selected && (
           <HairstyleOverlay
             styleId={selected.id}
             faceBounds={faceBounds ?? undefined}
@@ -331,7 +336,13 @@ export function CameraTryOnScreen({
       {/* ── Hairstyle recommendation sheet ── */}
       <View style={styles.sheet}>
         <Text style={styles.sheetTitle}>
-          Best for your <Text style={styles.accent}>{scan.faceShape}</Text> face
+          {hasPhotoScan ? (
+            <>
+              Best for your <Text style={styles.accent}>{scan.faceShape}</Text> face
+            </>
+          ) : (
+            'Recommended starter styles'
+          )}
         </Text>
         <FlatList
           horizontal
