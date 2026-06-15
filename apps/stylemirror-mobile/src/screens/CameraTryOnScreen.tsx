@@ -38,6 +38,17 @@ type Props = {
 
 type Mode = 'Hair' | 'Beard' | 'Hairline' | 'Transplant preview';
 const MODES: Mode[] = ['Hair', 'Beard', 'Hairline', 'Transplant preview'];
+type CaptureStatus = 'idle' | 'capturing' | 'detecting';
+
+function withTimeout<T>(work: Promise<T>, timeoutMs: number, message: string): Promise<T> {
+  let timeoutId: ReturnType<typeof setTimeout>;
+
+  const timeout = new Promise<never>((_, reject) => {
+    timeoutId = setTimeout(() => reject(new Error(message)), timeoutMs);
+  });
+
+  return Promise.race([work, timeout]).finally(() => clearTimeout(timeoutId));
+}
 
 const preferenceLabels: Record<StylePreference, string> = {
   all: 'All styles',
@@ -67,6 +78,8 @@ export function CameraTryOnScreen({
   const [selectedId, setSelectedId] = useState(recommendations[0]?.id ?? '');
   const [activeMode, setActiveMode] = useState<Mode>('Hair');
   const [cameraSize, setCameraSize] = useState({ width: 1, height: 1 });
+  const [cameraReady, setCameraReady] = useState(false);
+  const [captureStatus, setCaptureStatus] = useState<CaptureStatus>('idle');
   const [saveFeedback, setSaveFeedback] = useState(false);
   const cameraRef = useRef<CameraView>(null);
 
@@ -74,6 +87,10 @@ export function CameraTryOnScreen({
     () => recommendations.find((r) => r.id === selectedId) ?? recommendations[0],
     [recommendations, selectedId]
   );
+
+  useEffect(() => {
+    setCameraReady(false);
+  }, [permission?.granted]);
 
   useEffect(() => {
     if (!recommendations.length) {
@@ -91,23 +108,33 @@ export function CameraTryOnScreen({
       onRunDemoScan();
       return;
     }
-    if (!cameraRef.current) return;
+    if (!cameraReady || !cameraRef.current || captureStatus !== 'idle') return;
 
     try {
-      const photo = await cameraRef.current.takePictureAsync({
-        base64: false,
-        quality: 0.8,
-        skipProcessing: false
-      });
+      setCaptureStatus('capturing');
+      const photo = await withTimeout(
+        cameraRef.current.takePictureAsync({
+          base64: false,
+          quality: 0.7,
+          skipProcessing: true
+        }),
+        7000,
+        'Camera capture timed out'
+      );
       if (!photo) return;
 
       const runDetection = async (mode: FaceDetector.FaceDetectorMode) =>
-        (await FaceDetector.detectFacesAsync(photo.uri, {
-          mode,
-          detectLandmarks: FaceDetector.FaceDetectorLandmarks.all,
-          runClassifications: FaceDetector.FaceDetectorClassifications.none
-        })).faces;
+        withTimeout(
+          FaceDetector.detectFacesAsync(photo.uri, {
+            mode,
+            detectLandmarks: FaceDetector.FaceDetectorLandmarks.all,
+            runClassifications: FaceDetector.FaceDetectorClassifications.none
+          }),
+          mode === FaceDetector.FaceDetectorMode.fast ? 7000 : 9000,
+          'Face detection timed out'
+        ).then((result) => result.faces);
 
+      setCaptureStatus('detecting');
       let faces = await runDetection(FaceDetector.FaceDetectorMode.fast);
 
       if (faces.length === 0) {
@@ -132,8 +159,10 @@ export function CameraTryOnScreen({
       );
     } catch {
       onRunDemoScan();
+    } finally {
+      setCaptureStatus('idle');
     }
-  }, [permission, onRunRealScan, onRunDemoScan]);
+  }, [permission, cameraReady, captureStatus, onRunRealScan, onRunDemoScan]);
 
   const handleSave = useCallback(() => {
     if (!selected) return;
@@ -148,13 +177,30 @@ export function CameraTryOnScreen({
   }, []);
 
   const scanning = scanStatus === 'scanning';
+  const captureBusy = captureStatus !== 'idle';
+  const cameraStarting = Boolean(permission?.granted && !cameraReady);
+  const cameraDisabled = scanning || captureBusy || cameraStarting;
+  const scanPillText = captureBusy
+    ? captureStatus === 'capturing'
+      ? 'Capturing photo...'
+      : 'Analysing face...'
+    : cameraStarting
+      ? 'Starting camera...'
+      : errorMsg
+        ? 'No face detected'
+        : `${scan.faceShape} face · ${Math.round(scan.confidence * 100)}% conf`;
 
   return (
     <View style={styles.root}>
       {/* ── Camera / preview panel ── */}
       <View style={styles.cameraWrap} onLayout={onCameraLayout}>
         {permission?.granted ? (
-          <CameraView ref={cameraRef} style={StyleSheet.absoluteFill} facing="front" />
+          <CameraView
+            ref={cameraRef}
+            style={StyleSheet.absoluteFill}
+            facing="front"
+            onCameraReady={() => setCameraReady(true)}
+          />
         ) : (
           <View style={styles.cameraFallback} />
         )}
@@ -177,16 +223,14 @@ export function CameraTryOnScreen({
 
         {/* Scan result pill */}
         <View style={styles.overlayTop}>
-          {scanning ? (
+          {scanning || captureBusy || cameraStarting ? (
             <View style={styles.scanPillRow}>
               <ActivityIndicator size="small" color={theme.colors.accent} />
-              <Text style={styles.scanPill}>Scanning face structure...</Text>
+              <Text style={styles.scanPill}>{scanPillText}</Text>
             </View>
           ) : (
             <Text style={[styles.scanPill, errorMsg ? styles.scanPillError : null]}>
-              {errorMsg
-                ? '⚠ No face detected'
-                : `${scan.faceShape} face · ${Math.round(scan.confidence * 100)}% conf`}
+              {scanPillText}
             </Text>
           )}
         </View>
@@ -194,16 +238,17 @@ export function CameraTryOnScreen({
         {/* Bottom controls */}
         <View style={styles.overlayBottom}>
           <Pressable
-            style={styles.secondaryButton}
+            style={[styles.secondaryButton, cameraDisabled && styles.secondaryButtonDisabled]}
             onPress={permission?.granted ? handleCapture : requestPermission}
+            disabled={cameraDisabled}
           >
             <Text style={styles.secondaryButtonText}>
-              {permission?.granted ? 'Rescan' : 'Enable camera'}
+              {permission?.granted ? (cameraStarting ? 'Starting' : 'Rescan') : 'Enable camera'}
             </Text>
           </Pressable>
 
-          <Pressable style={styles.captureButton} onPress={handleCapture} disabled={scanning}>
-            <View style={[styles.captureInner, scanning && styles.captureInnerDisabled]} />
+          <Pressable style={styles.captureButton} onPress={handleCapture} disabled={cameraDisabled}>
+            <View style={[styles.captureInner, cameraDisabled && styles.captureInnerDisabled]} />
           </Pressable>
 
           <Pressable style={[styles.secondaryButton, saveFeedback && styles.saveSuccess]} onPress={handleSave}>
@@ -400,6 +445,9 @@ const styles = StyleSheet.create({
     minWidth: 82,
     paddingHorizontal: 12,
     paddingVertical: 11
+  },
+  secondaryButtonDisabled: {
+    opacity: 0.56
   },
   secondaryButtonText: {
     color: theme.colors.text,
