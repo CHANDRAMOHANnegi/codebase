@@ -381,7 +381,7 @@ const styles = StyleSheet.create({
   },
   previewImage: {
     ...StyleSheet.absoluteFillObject,
-    opacity: 0.82
+    opacity: 0.26
   },
   previewPlaceholder: {
     alignItems: 'center',
@@ -404,7 +404,7 @@ const styles = StyleSheet.create({
     width: 166
   },
   previewHeadOverPhoto: {
-    opacity: 0.2
+    opacity: 0.86
   },
   facePreviewGuide: {
     alignSelf: 'center',
