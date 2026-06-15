@@ -1,9 +1,21 @@
-import { Alert, Image, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
-import { useSavedLooks } from '../features/saved/useSavedLooks';
+import { Alert, Image, LayoutChangeEvent, Modal, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { getHairstyleById } from '@stylemirror/style-engine';
+import { useState } from 'react';
+import { HairstyleOverlay } from '../components/HairstyleOverlay';
+import { SavedLook, useSavedLooks } from '../features/saved/useSavedLooks';
 import { theme } from '../theme/theme';
 
 export function SavedLooksScreen() {
   const { looks, loading, deleteLook, clearAll } = useSavedLooks();
+  const [selectedLook, setSelectedLook] = useState<SavedLook | null>(null);
+  const [previewSize, setPreviewSize] = useState({ width: 1, height: 1 });
+
+  const selectedStyle = selectedLook ? getHairstyleById(selectedLook.styleId) : undefined;
+
+  const onPreviewLayout = (event: LayoutChangeEvent) => {
+    const { width, height } = event.nativeEvent.layout;
+    setPreviewSize({ width, height });
+  };
 
   const handleDelete = (id: string, title: string) => {
     Alert.alert('Remove look', `Remove "${title}" from saved looks?`, [
@@ -53,7 +65,7 @@ export function SavedLooksScreen() {
       )}
 
       {looks.map((look) => (
-        <View key={look.id} style={styles.card}>
+        <Pressable key={look.id} style={styles.card} onPress={() => setSelectedLook(look)}>
           {look.photoUri ? (
             <Image source={{ uri: look.photoUri }} style={styles.thumb} resizeMode="cover" />
           ) : (
@@ -72,11 +84,12 @@ export function SavedLooksScreen() {
                 year: 'numeric'
               })}
             </Text>
+            <Text style={styles.tapHint}>Tap to preview hairstyle</Text>
           </View>
           <Pressable onPress={() => handleDelete(look.id, look.title)} style={styles.deleteButton}>
             <Text style={styles.deleteText}>✕</Text>
           </Pressable>
-        </View>
+        </Pressable>
       ))}
 
       <View style={styles.note}>
@@ -85,6 +98,60 @@ export function SavedLooksScreen() {
           Take a screenshot of your saved look or share your barber note before your next appointment.
         </Text>
       </View>
+
+      <Modal
+        animationType="slide"
+        transparent
+        visible={Boolean(selectedLook)}
+        onRequestClose={() => setSelectedLook(null)}
+      >
+        <View style={styles.modalBackdrop}>
+          <View style={styles.modalSheet}>
+            <View style={styles.modalHeader}>
+              <View style={styles.modalHeaderText}>
+                <Text style={styles.modalTitle}>{selectedLook?.title}</Text>
+                <Text style={styles.modalSubtitle}>
+                  {selectedLook?.faceShape} face · {selectedStyle?.length ?? 'style'} cut
+                </Text>
+              </View>
+              <Pressable onPress={() => setSelectedLook(null)} style={styles.closeButton}>
+                <Text style={styles.closeText}>Close</Text>
+              </Pressable>
+            </View>
+
+            <View style={styles.previewFrame} onLayout={onPreviewLayout}>
+              {selectedLook?.photoUri ? (
+                <Image source={{ uri: selectedLook.photoUri }} style={styles.previewImage} resizeMode="cover" />
+              ) : (
+                <View style={styles.previewPlaceholder}>
+                  <Text style={styles.previewPlaceholderText}>No photo saved</Text>
+                </View>
+              )}
+              {selectedLook && (
+                <HairstyleOverlay
+                  styleId={selectedLook.styleId}
+                  containerWidth={previewSize.width}
+                  containerHeight={previewSize.height}
+                />
+              )}
+            </View>
+
+            <View style={styles.detailBlock}>
+              <Text style={styles.detailLabel}>Style preview</Text>
+              <Text style={styles.detailBody}>
+                {selectedStyle?.reason ?? 'This saved look is ready to use as a barber reference.'}
+              </Text>
+            </View>
+
+            <View style={styles.detailBlock}>
+              <Text style={styles.detailLabel}>Barber note</Text>
+              <Text style={styles.detailBody}>
+                {selectedStyle?.barberNote ?? 'Show this saved photo and style name to your barber.'}
+              </Text>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </ScrollView>
   );
 }
@@ -191,6 +258,12 @@ const styles = StyleSheet.create({
     marginTop: 8,
     textTransform: 'uppercase'
   },
+  tapHint: {
+    color: theme.colors.accent,
+    fontSize: 12,
+    fontWeight: '800',
+    marginTop: 6
+  },
   savedAt: {
     color: theme.colors.textMuted,
     fontSize: 11,
@@ -221,5 +294,89 @@ const styles = StyleSheet.create({
     color: theme.colors.textMuted,
     lineHeight: 21,
     marginTop: 8
+  },
+  modalBackdrop: {
+    backgroundColor: 'rgba(0,0,0,0.72)',
+    flex: 1,
+    justifyContent: 'flex-end'
+  },
+  modalSheet: {
+    backgroundColor: theme.colors.background,
+    borderTopColor: theme.colors.border,
+    borderTopWidth: 1,
+    maxHeight: '88%',
+    padding: theme.spacing.lg
+  },
+  modalHeader: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: theme.spacing.md
+  },
+  modalHeaderText: {
+    flex: 1,
+    paddingRight: theme.spacing.md
+  },
+  modalTitle: {
+    color: theme.colors.text,
+    fontSize: 24,
+    fontWeight: '900'
+  },
+  modalSubtitle: {
+    color: theme.colors.textMuted,
+    fontSize: 13,
+    marginTop: 4,
+    textTransform: 'capitalize'
+  },
+  closeButton: {
+    borderColor: theme.colors.border,
+    borderRadius: 999,
+    borderWidth: 1,
+    paddingHorizontal: 14,
+    paddingVertical: 9
+  },
+  closeText: {
+    color: theme.colors.text,
+    fontSize: 12,
+    fontWeight: '800'
+  },
+  previewFrame: {
+    backgroundColor: '#050609',
+    borderColor: theme.colors.border,
+    borderRadius: theme.radius.lg,
+    borderWidth: 1,
+    height: 380,
+    overflow: 'hidden'
+  },
+  previewImage: {
+    ...StyleSheet.absoluteFillObject
+  },
+  previewPlaceholder: {
+    alignItems: 'center',
+    ...StyleSheet.absoluteFillObject,
+    justifyContent: 'center'
+  },
+  previewPlaceholderText: {
+    color: theme.colors.textMuted,
+    fontWeight: '800'
+  },
+  detailBlock: {
+    backgroundColor: theme.colors.surface,
+    borderColor: theme.colors.border,
+    borderRadius: theme.radius.md,
+    borderWidth: 1,
+    marginTop: theme.spacing.md,
+    padding: theme.spacing.md
+  },
+  detailLabel: {
+    color: theme.colors.accent,
+    fontSize: 12,
+    fontWeight: '900',
+    marginBottom: 6,
+    textTransform: 'uppercase'
+  },
+  detailBody: {
+    color: theme.colors.text,
+    lineHeight: 21
   }
 });

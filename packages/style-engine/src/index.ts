@@ -172,3 +172,7 @@ export function recommendHairstyles(
     .sort((a, b) => b.score - a.score)
     .map((item) => item.style);
 }
+
+export function getHairstyleById(styleId: string): HairstyleRecommendation | undefined {
+  return catalog.find((style) => style.id === styleId);
+}
