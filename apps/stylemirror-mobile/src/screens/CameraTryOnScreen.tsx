@@ -355,7 +355,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#07080B',
     borderBottomColor: theme.colors.border,
     borderBottomWidth: 1,
-    flex: 1,
+    height: 430,
     justifyContent: 'center',
     marginHorizontal: theme.spacing.md,
     overflow: 'hidden',
