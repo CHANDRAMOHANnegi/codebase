@@ -29,9 +29,6 @@ export default function App() {
 
   const handleSaveLook = (styleId: string, styleName: string, photoUri?: string) => {
     saveLook({ faceShape: scan.faceShape, styleId, styleName, photoUri });
-    // Navigate to saved tab briefly to confirm
-    setTab('saved');
-    setTimeout(() => setTab('tryOn'), 1500);
   };
 
   if (!hasStarted) {

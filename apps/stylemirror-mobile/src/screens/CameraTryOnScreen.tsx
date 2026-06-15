@@ -6,6 +6,7 @@ import {
   FlatList,
   LayoutChangeEvent,
   Pressable,
+  ScrollView,
   StyleSheet,
   Text,
   View
@@ -165,8 +166,8 @@ export function CameraTryOnScreen({
   }, [permission, cameraReady, captureStatus, onRunRealScan, onRunDemoScan]);
 
   const handleSave = useCallback(() => {
-    if (!selected) return;
-    onSaveLook(selected.id, selected.name, lastPhotoUri ?? undefined);
+    if (!selected || !lastPhotoUri) return;
+    onSaveLook(selected.id, selected.name, lastPhotoUri);
     setSaveFeedback(true);
     setTimeout(() => setSaveFeedback(false), 2000);
   }, [selected, lastPhotoUri, onSaveLook]);
@@ -180,6 +181,7 @@ export function CameraTryOnScreen({
   const captureBusy = captureStatus !== 'idle';
   const cameraStarting = Boolean(permission?.granted && !cameraReady);
   const cameraDisabled = scanning || captureBusy || cameraStarting;
+  const canSave = Boolean(selected && lastPhotoUri && scanStatus === 'complete');
   const scanPillText = captureBusy
     ? captureStatus === 'capturing'
       ? 'Capturing photo...'
@@ -191,7 +193,11 @@ export function CameraTryOnScreen({
         : `${scan.faceShape} face · ${Math.round(scan.confidence * 100)}% conf`;
 
   return (
-    <View style={styles.root}>
+    <ScrollView
+      style={styles.root}
+      contentContainerStyle={styles.content}
+      showsVerticalScrollIndicator={false}
+    >
       {/* ── Camera / preview panel ── */}
       <View style={styles.cameraWrap} onLayout={onCameraLayout}>
         {permission?.granted ? (
@@ -251,9 +257,23 @@ export function CameraTryOnScreen({
             <View style={[styles.captureInner, cameraDisabled && styles.captureInnerDisabled]} />
           </Pressable>
 
-          <Pressable style={[styles.secondaryButton, saveFeedback && styles.saveSuccess]} onPress={handleSave}>
-            <Text style={[styles.secondaryButtonText, saveFeedback && styles.saveSuccessText]}>
-              {saveFeedback ? '✓ Saved' : 'Save'}
+          <Pressable
+            style={[
+              styles.secondaryButton,
+              !canSave && styles.secondaryButtonDisabled,
+              saveFeedback && styles.saveSuccess
+            ]}
+            onPress={handleSave}
+            disabled={!canSave}
+          >
+            <Text
+              style={[
+                styles.secondaryButtonText,
+                !canSave && styles.disabledButtonText,
+                saveFeedback && styles.saveSuccessText
+              ]}
+            >
+              {saveFeedback ? '✓ Saved' : canSave ? 'Save' : 'Scan first'}
             </Text>
           </Pressable>
         </View>
@@ -344,12 +364,15 @@ export function CameraTryOnScreen({
           </View>
         )}
       </View>
-    </View>
+    </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
   root: { flex: 1 },
+  content: {
+    paddingBottom: theme.spacing.xl
+  },
   cameraWrap: {
     alignItems: 'center',
     backgroundColor: '#07080B',
@@ -453,6 +476,9 @@ const styles = StyleSheet.create({
     color: theme.colors.text,
     fontSize: 12,
     fontWeight: '800'
+  },
+  disabledButtonText: {
+    color: theme.colors.textMuted
   },
   saveSuccess: {
     backgroundColor: `${theme.colors.success}22`,
