@@ -120,6 +120,7 @@ export function SavedLooksScreen() {
             </View>
 
             <View style={styles.previewFrame} onLayout={onPreviewLayout}>
+              <View style={styles.previewBackdrop} />
               {selectedLook?.photoUri ? (
                 <Image source={{ uri: selectedLook.photoUri }} style={styles.previewImage} resizeMode="cover" />
               ) : (
@@ -127,6 +128,7 @@ export function SavedLooksScreen() {
                   <Text style={styles.previewPlaceholderText}>No photo saved</Text>
                 </View>
               )}
+              <View style={styles.facePreviewGuide} pointerEvents="none" />
               {selectedLook && (
                 <HairstyleOverlay
                   styleId={selectedLook.styleId}
@@ -134,6 +136,9 @@ export function SavedLooksScreen() {
                   containerHeight={previewSize.height}
                 />
               )}
+              <View style={styles.previewLabel}>
+                <Text style={styles.previewLabelText}>{selectedLook?.title}</Text>
+              </View>
             </View>
 
             <View style={styles.detailBlock}>
@@ -341,15 +346,20 @@ const styles = StyleSheet.create({
     fontWeight: '800'
   },
   previewFrame: {
-    backgroundColor: '#050609',
+    backgroundColor: '#14171F',
     borderColor: theme.colors.border,
     borderRadius: theme.radius.lg,
     borderWidth: 1,
     height: 380,
     overflow: 'hidden'
   },
+  previewBackdrop: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: '#171A22'
+  },
   previewImage: {
-    ...StyleSheet.absoluteFillObject
+    ...StyleSheet.absoluteFillObject,
+    opacity: 0.82
   },
   previewPlaceholder: {
     alignItems: 'center',
@@ -359,6 +369,32 @@ const styles = StyleSheet.create({
   previewPlaceholderText: {
     color: theme.colors.textMuted,
     fontWeight: '800'
+  },
+  facePreviewGuide: {
+    alignSelf: 'center',
+    borderColor: `${theme.colors.accent}AA`,
+    borderRadius: 110,
+    borderWidth: 2,
+    height: 220,
+    marginTop: 118,
+    position: 'absolute',
+    width: 168
+  },
+  previewLabel: {
+    alignSelf: 'center',
+    backgroundColor: 'rgba(15,17,21,0.88)',
+    borderColor: `${theme.colors.accent}88`,
+    borderRadius: 999,
+    borderWidth: 1,
+    bottom: 18,
+    paddingHorizontal: 16,
+    paddingVertical: 9,
+    position: 'absolute'
+  },
+  previewLabelText: {
+    color: theme.colors.accent,
+    fontSize: 13,
+    fontWeight: '900'
   },
   detailBlock: {
     backgroundColor: theme.colors.surface,
