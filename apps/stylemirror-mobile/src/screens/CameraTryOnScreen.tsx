@@ -116,8 +116,8 @@ export function CameraTryOnScreen({
       const photo = await withTimeout(
         cameraRef.current.takePictureAsync({
           base64: false,
-          quality: 0.7,
-          skipProcessing: true
+          quality: 0.85,
+          skipProcessing: false
         }),
         7000,
         'Camera capture timed out'
