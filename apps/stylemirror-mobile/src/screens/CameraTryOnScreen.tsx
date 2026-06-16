@@ -216,6 +216,20 @@ export function CameraTryOnScreen({
           <View style={styles.cameraFallback} />
         )}
 
+        {!hasPhotoScan && (
+          <View style={styles.cameraFacePlaceholder} pointerEvents="none">
+            <View style={styles.placeholderEarLeft} />
+            <View style={styles.placeholderEarRight} />
+            <View style={styles.placeholderForehead} />
+            <View style={styles.placeholderEyeRow}>
+              <View style={styles.placeholderEye} />
+              <View style={styles.placeholderEye} />
+            </View>
+            <View style={styles.placeholderNose} />
+            <View style={styles.placeholderMouth} />
+          </View>
+        )}
+
         {/* Face guide oval */}
         <View style={styles.faceGuide} />
 
@@ -404,6 +418,76 @@ const styles = StyleSheet.create({
   cameraFallback: {
     ...StyleSheet.absoluteFillObject,
     backgroundColor: '#07080B'
+  },
+  cameraFacePlaceholder: {
+    alignItems: 'center',
+    backgroundColor: '#C99F77',
+    borderColor: '#F0D1AC',
+    borderRadius: 118,
+    borderWidth: 2,
+    height: 245,
+    justifyContent: 'center',
+    opacity: 0.88,
+    position: 'absolute',
+    top: 104,
+    width: 178
+  },
+  placeholderEarLeft: {
+    backgroundColor: '#B98D68',
+    borderRadius: 18,
+    height: 50,
+    left: -16,
+    position: 'absolute',
+    top: 99,
+    width: 28
+  },
+  placeholderEarRight: {
+    backgroundColor: '#B98D68',
+    borderRadius: 18,
+    height: 50,
+    position: 'absolute',
+    right: -16,
+    top: 99,
+    width: 28
+  },
+  placeholderForehead: {
+    backgroundColor: `${theme.colors.accent}55`,
+    borderColor: theme.colors.accent,
+    borderRadius: 44,
+    borderWidth: 2,
+    height: 62,
+    position: 'absolute',
+    top: -12,
+    width: 154
+  },
+  placeholderEyeRow: {
+    flexDirection: 'row',
+    gap: 34,
+    marginTop: 28
+  },
+  placeholderEye: {
+    backgroundColor: '#18120D',
+    borderRadius: 999,
+    height: 9,
+    opacity: 0.62,
+    width: 9
+  },
+  placeholderNose: {
+    backgroundColor: '#A97E5C',
+    borderRadius: 999,
+    height: 28,
+    marginTop: 20,
+    opacity: 0.54,
+    width: 10
+  },
+  placeholderMouth: {
+    borderBottomColor: '#6F4D35',
+    borderBottomWidth: 3,
+    borderRadius: 999,
+    height: 16,
+    marginTop: 18,
+    opacity: 0.58,
+    width: 48
   },
   faceGuide: {
     borderColor: `${theme.colors.accent}55`,
