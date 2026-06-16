@@ -69,8 +69,9 @@ export function SavedLooksScreen() {
           <View style={styles.thumbPreview}>
             {look.photoUri ? (
               <Image source={{ uri: look.photoUri }} style={styles.thumbImage} resizeMode="cover" />
-            ) : null}
-            <View style={styles.thumbHead} />
+            ) : (
+              <View style={styles.thumbHead} />
+            )}
             <View style={styles.thumbHair} />
           </View>
           <View style={styles.cardText}>
@@ -128,10 +129,7 @@ export function SavedLooksScreen() {
                   <Text style={styles.previewPlaceholderText}>No photo saved</Text>
                 </View>
               )}
-              <View
-                style={[styles.previewHead, Boolean(selectedLook?.photoUri) && styles.previewHeadOverPhoto]}
-                pointerEvents="none"
-              />
+              {!selectedLook?.photoUri && <View style={styles.previewHead} pointerEvents="none" />}
               <View style={styles.facePreviewGuide} pointerEvents="none" />
               {selectedLook && (
                 <HairstyleOverlay
@@ -243,7 +241,7 @@ const styles = StyleSheet.create({
   },
   thumbImage: {
     ...StyleSheet.absoluteFillObject,
-    opacity: 0.34
+    opacity: 0.95
   },
   thumbHead: {
     backgroundColor: '#D8B18A',
@@ -381,7 +379,7 @@ const styles = StyleSheet.create({
   },
   previewImage: {
     ...StyleSheet.absoluteFillObject,
-    opacity: 0.26
+    opacity: 1
   },
   previewPlaceholder: {
     alignItems: 'center',
@@ -402,9 +400,6 @@ const styles = StyleSheet.create({
     marginTop: 126,
     position: 'absolute',
     width: 166
-  },
-  previewHeadOverPhoto: {
-    opacity: 0.86
   },
   facePreviewGuide: {
     alignSelf: 'center',
