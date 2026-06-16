@@ -421,19 +421,18 @@ const styles = StyleSheet.create({
   },
   cameraFacePlaceholder: {
     alignItems: 'center',
-    backgroundColor: '#C99F77',
+    backgroundColor: 'rgba(201,159,119,0.24)',
     borderColor: '#F0D1AC',
     borderRadius: 118,
     borderWidth: 2,
     height: 245,
     justifyContent: 'center',
-    opacity: 0.88,
     position: 'absolute',
     top: 104,
     width: 178
   },
   placeholderEarLeft: {
-    backgroundColor: '#B98D68',
+    backgroundColor: 'rgba(185,141,104,0.32)',
     borderRadius: 18,
     height: 50,
     left: -16,
@@ -442,7 +441,7 @@ const styles = StyleSheet.create({
     width: 28
   },
   placeholderEarRight: {
-    backgroundColor: '#B98D68',
+    backgroundColor: 'rgba(185,141,104,0.32)',
     borderRadius: 18,
     height: 50,
     position: 'absolute',
@@ -451,7 +450,7 @@ const styles = StyleSheet.create({
     width: 28
   },
   placeholderForehead: {
-    backgroundColor: `${theme.colors.accent}55`,
+    backgroundColor: `${theme.colors.accent}33`,
     borderColor: theme.colors.accent,
     borderRadius: 44,
     borderWidth: 2,
@@ -469,7 +468,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#18120D',
     borderRadius: 999,
     height: 9,
-    opacity: 0.62,
+    opacity: 0.44,
     width: 9
   },
   placeholderNose: {
@@ -477,7 +476,7 @@ const styles = StyleSheet.create({
     borderRadius: 999,
     height: 28,
     marginTop: 20,
-    opacity: 0.54,
+    opacity: 0.34,
     width: 10
   },
   placeholderMouth: {
@@ -486,7 +485,7 @@ const styles = StyleSheet.create({
     borderRadius: 999,
     height: 16,
     marginTop: 18,
-    opacity: 0.58,
+    opacity: 0.38,
     width: 48
   },
   faceGuide: {
