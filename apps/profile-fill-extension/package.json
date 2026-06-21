@@ -1,0 +1,9 @@
+{
+  "name": "@stylemirror/profile-fill-extension",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "check": "node scripts/check-extension.mjs",
+    "build": "node scripts/check-extension.mjs"
+  }
+}

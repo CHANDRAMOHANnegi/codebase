@@ -9,6 +9,8 @@
   "scripts": {
     "typecheck": "npm run typecheck --workspace @stylemirror/mobile",
     "test:style-engine": "npm test --workspace @stylemirror/style-engine",
+    "check:extension": "npm run check --workspace @stylemirror/profile-fill-extension",
+    "build:extension": "npm run build --workspace @stylemirror/profile-fill-extension",
     "start:mobile": "npm run start --workspace @stylemirror/mobile",
     "android:mobile": "npm run android --workspace @stylemirror/mobile",
     "android:mobile:release": "npm run android:release --workspace @stylemirror/mobile"

@@ -1,0 +1,19 @@
+{
+  "manifest_version": 3,
+  "name": "Profile Fill Assistant",
+  "description": "Save your profile once and fill common job application forms from the current tab.",
+  "version": "0.1.0",
+  "permissions": ["activeTab", "storage"],
+  "host_permissions": ["<all_urls>"],
+  "action": {
+    "default_title": "Profile Fill Assistant",
+    "default_popup": "popup/popup.html"
+  },
+  "content_scripts": [
+    {
+      "matches": ["<all_urls>"],
+      "js": ["content/content.js"],
+      "run_at": "document_idle"
+    }
+  ]
+}
